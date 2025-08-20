@@ -14,31 +14,27 @@ clean:
 	find . -name tags.lock     -not -path '*/\.git/*' -exec rm -f {} \+
 
 pretrain:
+	# @ set -e; \
+	# for c in configs/lm-pretrain/pubmed/causal.yaml; do \
+	# 	bin/trainer.py fit -c "$$c"; \
+	# done
+	
+	# @ set -e; \
+	# for c in configs/gnn-pretrain/pubmed/base-lr-1e-2-20epoch.yaml; do \
+	# 	bin/trainer.py fit -c "$$c"; \
+	# done
+	
 	@ set -e; \
-	for c in configs/lm-pretrain/*/*.yaml; do \
+	for c in configs/clip-graph/inductive-causal/pubmed/base.yaml; do \
 		bin/trainer.py fit -c "$$c"; \
 	done
 	
-	@ set -e; \
-	for c in configs/gnn-pretrain*/*/*.yaml; do \
-		bin/trainer.py fit -c "$$c"; \
-	done
-	
-	@ set -e; \
-	for c in configs/clip-graph{,-directed}/inductive-causal/*/*.yaml; do \
-		bin/trainer.py fit -c "$$c"; \
-	done
-	
-	@ set -e; \
-	for c in configs/clip-graph{,-directed}/inductive-masked/*/*.yaml; do \
-		bin/trainer.py fit -c "$$c"; \
-	done
 
 eval:
 	bin/eval.py batch -p -r -s test -d cpu --out-dir data/evals/ -f configs/comparisons.yaml
 
-score: score_gnn_pretrain score_lm_pretrain_causal score_lm_pretrain_masked \
-       score_clip_graph_causal score_clip_graph_masked
+score: score_gnn_pretrain score_lm_pretrain_causal \
+       score_clip_graph_causal
 
 check_defined = \
 	$(strip $(foreach 1, $1, $(call __check_defined,$1,$(strip $(value 2)))))
@@ -55,24 +51,16 @@ score_gnn_pretrain:
 	$(call check_defined, SPLIT, ${SCORE_MSG})
 	
 	@ set -e; \
-	for p in lightning_logs/gnn-pretrain/*; do \
-		for v in "$$p"/*; do \
+	for p in lightning_logs/gnn-pretrain/pubmed; do \
+		for v in "$$p"/version_2; do \
 			echo "Scoring $$v..." && \
 			bin/score.py gnn_pretrain -i "$$v" -o data/embeds/ \
 				-c "configs/eval-datasets/$$(basename "$$p")/causal.yaml" \
 				-d cuda -s "$(SPLIT)"; \
 		done \
 	done
-	
-	@ set -e; \
-	for p in lightning_logs/gnn-pretrain-directed/*; do \
-		for v in "$$p"/*; do \
-			echo "Scoring $$v..." && \
-			bin/score.py gnn_pretrain -i "$$v" -o data/embeds/ \
-				-c "configs/eval-datasets/$$(basename "$$p")/causal-directed.yaml" \
-				-d cuda -s "$(SPLIT)"; \
-		done \
-	done
+
+
 
 # for bin/score.py pretrain_lm, we need to specify the pooling mode and
 # normalization behavior. they aren't used in the text pretraining task, but
@@ -84,8 +72,8 @@ score_lm_pretrain_causal:
 	$(call check_defined, SPLIT, ${SCORE_MSG})
 	
 	@ set -e; \
-	for p in lightning_logs/lm-pretrain/*; do \
-		for v in "$$p"/causal/*; do \
+	for p in lightning_logs/lm-pretrain/pubmed; do \
+		for v in "$$p"/causal/version_6; do \
 			echo "Scoring $$v..." && \
 			bin/score.py lm_pretrain -i "$$v" -o data/embeds/ \
 				-c "configs/eval-datasets/$$(basename "$$p")/causal.yaml" \
@@ -110,8 +98,8 @@ score_clip_graph_causal:
 	$(call check_defined, SPLIT, ${SCORE_MSG})
 	
 	@ set -e; \
-	for p in lightning_logs/clip-graph/inductive-causal/*; do \
-		for v in "$$p"/*; do \
+	for p in lightning_logs/clip-graph/inductive-causal/pubmed; do \
+		for v in "$$p"/version_15; do \
 			echo "Scoring $$v..." && \
 			bin/score.py clip_graph -i "$$v" -o data/embeds/ \
 				-c "configs/eval-datasets/$$(basename "$$p")/causal.yaml" \
@@ -119,14 +107,6 @@ score_clip_graph_causal:
 		done \
 	done
 	
-	for p in lightning_logs/clip-graph-directed/inductive-causal/*; do \
-		for v in "$$p"/*; do \
-			echo "Scoring $$v..." && \
-			bin/score.py clip_graph -i "$$v" -o data/embeds/ \
-				-c "configs/eval-datasets/$$(basename "$$p")/causal-directed.yaml" \
-				-p -d cuda -s "$(SPLIT)"; \
-		done \
-	done
 
 score_clip_graph_masked:
 	$(call check_defined, SPLIT, ${SCORE_MSG})

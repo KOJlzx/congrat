@@ -36,25 +36,34 @@ def square_contrastive_loss(
 
         if sim_weights == 'identity':
             weights = torch.ones((N,), device=device)
-        elif sim_weights == 'exp':
+        elif sim_weights == 'exp': #[1.0000, 0.6394, 0.4088, 0.2614, 0.1672]
             weights = (-1 * torch.arange(N, device=device)).exp()
-        else:  # sim_weights == 'exp_thick_tail'
+        else:  # sim_weights == 'exp_thick_tail' [1.0000, 0.3679, 0.1353, 0.0498, 0.0183]
             weights = (-1 * 1/(N ** 0.5) * torch.arange(N, device=device)).exp()
 
         weights = weights.unsqueeze(0).expand(N, -1)
+        # [1.0000, 0.6394, 0.4088, 0.2614, 0.1672],
+        # [1.0000, 0.6394, 0.4088, 0.2614, 0.1672],
+        # [1.0000, 0.6394, 0.4088, 0.2614, 0.1672],
+        # [1.0000, 0.6394, 0.4088, 0.2614, 0.1672],
+        # [1.0000, 0.6394, 0.4088, 0.2614, 0.1672]]
         sort_inds = torch.argsort(sims, dim=1, descending=True)
+
         sims = (sims.gather(1, sort_inds) * weights)
+        # sims dim=1 排序（大到小） 然后*weights 这样会导致重要的节点更重要，不重要的节点权值更低
         sims = sims.gather(1, sort_inds.argsort(1))
-
+        # 按原顺序排回来
         row_reg_dist = sims - sims.min(dim=1).values.unsqueeze(1).expand(-1, N)
+        # 将sims的每一行减去改行的最小值
         row_reg_dist = F.normalize(row_reg_dist, p=1, dim=1)
-
+        # l1 归一化
         col_reg_dist = sims.T - sims.T.min(dim=1).values.unsqueeze(1).expand(-1, N)
         col_reg_dist = F.normalize(col_reg_dist, p=1, dim=1)
-
+        #列同理
         row_targets = alpha * row_reg_dist + (1 - alpha) * torch.eye(N, device=device)
         col_targets = alpha * col_reg_dist + (1 - alpha) * torch.eye(N, device=device)
-
+        # sims是没有对角元素的 eye用来构造N * N 的1-对角矩阵
+        # 套入论文公式即可
     return 0.5 * (
         F.cross_entropy(logits, row_targets) +
         F.cross_entropy(logits.T, col_targets)

@@ -6,7 +6,7 @@ data:
         data_dir: 'data/pubmed'
         seed: ${seed_everything}
         mlm: false
-        batch_size: 36
+        batch_size: 4
         num_workers: 4
         pin_memory: true
 
@@ -15,7 +15,7 @@ data:
 
         transductive: false
         transductive_identity_features: false
-
+ckpt_path: lightning_logs/clip-graph/inductive-causal/pubmed/version_13/checkpoints/epoch=5-step=55122.ckpt
 model:
     class_path: clip_graph.lit.LitClipGraph
     init_args:
@@ -93,7 +93,7 @@ trainer:
     # Hardware selection
     #
 
-    num_nodes: 1
+    num_nodes: 2
     accelerator: 'gpu'
     devices: [0]
 
@@ -106,24 +106,24 @@ trainer:
 
     precision: 16
 
-    plugins:
-        - class_path: pytorch_lightning.plugins.precision.NativeMixedPrecisionPlugin
-          init_args:
-              precision: 16
-              device: 'cuda'
-              scaler:
-                  class_path: torch.cuda.amp.GradScaler
-                  init_args:
-                      # the default scale of 2**16 overflows early in training
-                      # and makes the gradient unstable
-                      init_scale: 256
+    # plugins:
+    #     - class_path: pytorch_lightning.plugins.precision.NativeMixedPrecisionPlugin
+    #       init_args:
+    #           precision: 16
+    #           device: 'cuda'
+    #           scaler:
+    #               class_path: torch.cuda.amp.GradScaler
+    #               init_args:
+    #                   # the default scale of 2**16 overflows early in training
+    #                   # and makes the gradient unstable
+    #                   init_scale: 256
 
     #
     # Logging
     #
 
     log_every_n_steps: 10
-    track_grad_norm: 2  # the 2-norm
+    # track_grad_norm: 2  # the 2-norm
     enable_model_summary: true
     enable_progress_bar: true
 
@@ -160,7 +160,7 @@ trainer:
     # (times two, for graph and text) 64-way classification problems to solve;
     # with a 128 batch size and accumulate_grad_batches of 1 or null, there's
     # one 128-way problem.
-    accumulate_grad_batches: null
+    accumulate_grad_batches: 1
 
     # NOTE this is very very important to avoid suddenly diverging loss;
     # the tensorboard plots show the occasional wild spike in the overall

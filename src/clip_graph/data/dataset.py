@@ -256,6 +256,12 @@ class GraphDatasetMixin(BaseDataset):
             num_nodes = self.graph_data.num_nodes
 
         A = to_dense_adj(edge_index).squeeze(0)
+        # print(edge_index)
+        # print("________",  A.shape)
+        #tensor([[    0,     0,     0,  ..., 12209, 12210, 12211],
+        #[    1,     2,     3,  ..., 11644,  1791,  5787]])
+        #________torch.Size([12212, 12212])
+
         if torch.cuda.is_available():
             A = A.to(self.device)  # verrry slow on CPU
 
@@ -314,7 +320,7 @@ class GraphDatasetMixin(BaseDataset):
             'node_ids': new_node_ids
         }
 
-        misc_keys = list(set(self.graph_data.keys) - set(graph_kwargs.keys()))
+        misc_keys = list(set(self.graph_data.keys()) - set(graph_kwargs.keys()))
         for key in misc_keys:
             if key == 'neg_edge_index':
                 continue
@@ -378,7 +384,7 @@ class GraphDataset(GraphDatasetMixin):
     def __getitem__(self, idx: int) -> Dict[str, Any]:
         ret = {}
 
-        for key in self.graph_data.keys:
+        for key in self.graph_data.keys():
             ret['graph_' + key] = getattr(self.graph_data, key)
 
         return ret
@@ -542,7 +548,7 @@ class GraphTextDataset(GraphDatasetMixin, TextDataset):
     def __getitem__(self, idx: int) -> Dict[str, Any]:
         ret = super().__getitem__(idx)
 
-        for key in self.graph_data.keys:  # copy references, not values
+        for key in self.graph_data.keys():  # copy references, not values
             ret['graph_' + key] = getattr(self.graph_data, key)
 
         return ret
@@ -700,6 +706,7 @@ class BatchGraphTextDataset(BaseDataset):
         indices = self.dataset_indices[start_idx:end_idx]
 
         # dedupe by text
+        # argunique : 每个唯一值第一次出现的原始索引 如果 sort=True，按原始出现顺序排好。
         uniques = self.text_unique_ids[indices]
         indices = indices[ut.argunique(uniques), ...]
 

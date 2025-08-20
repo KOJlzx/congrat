@@ -284,7 +284,7 @@ class LMForPretrain(ModelBase):
     def config(self) -> Union[tf.PretrainedConfig, Any]:
         return self.model.config
 
-
+# configs/clip-graph/inductive-causal/pubmed/base.yaml#
 #
 # CLIP-graph model
 #

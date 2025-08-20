@@ -204,7 +204,11 @@ class LitGAE(LitBase):
             batch['graph_edge_index'],
             batch['graph_neg_edge_index'],
         )
-
+        #auc 就是正样本的预测值大于负样本预测值的概率 对于图的话也就是
+        # sum（em(a）@ em(b) > em(c) @ em(d) ab间存在边 cd不存在边)/ 正边数 * 负边数
+        # ap（Average Precision, 平均精度）
+        # 取正样本边（真实存在的边）和负样本边（随机采样不存在的边） 模型对每条边算一个分数（比如两节点 embedding 的内积）
+        # 和auc差不多， 都是曲线面积，更关注整理FP，两个指标用于连接预测
         self.log(f'{split}_loss', loss, on_step=True, on_epoch=True,
                  logger=True, prog_bar=True, sync_dist=True, batch_size=1,
                  rank_zero_only=True)
@@ -462,7 +466,7 @@ class LitClipGraph(LitBase):
             )
 
         if gnn_ckpt_path is not None:
-            gnn = LitGraphModel.load_from_checkpoint(gnn_ckpt_path)
+            gnn = LitGAE.load_from_checkpoint(gnn_ckpt_path)
 
             # throw away the LightningModule and the (V)GAE - we just want the
             # node embeddings
@@ -584,6 +588,8 @@ class LitClipGraph(LitBase):
         # reasons I don't understand - data issue?
         # graph_x = graph_x.float()  # or .half()
 
+        # print(batch['input_ids'].shape, batch['attention_mask'].shape, graph_x.shape, batch['graph_edge_index'].shape, batch['graph_node_ids'].shape, batch['text_node_ids'].shape) 
+        #torch.Size([4, 123]) torch.Size([4, 123]) torch.Size([713, 768]) torch.Size([2, 1302]) torch.Size([713]) torch.Size([4])
         logits = self(
             input_ids = batch['input_ids'],
             attention_mask = batch['attention_mask'],
@@ -593,6 +599,11 @@ class LitClipGraph(LitBase):
             text_node_ids = batch['text_node_ids'],
         )
 
+        # print(batch['text_node_ids'], batch['graph_node_ids']) 
+        #([17145742, 12651051,  9787347, 12513038], device='cuda:0')
+        # print(logits.shape)
+        #[4, 4]
+        # print(batch['graph_sim_mutual'].shape)
         if self.sim_smoothing > 0:
             inds = (batch['text_node_ids'][:, None] == batch['graph_node_ids'])
             inds = inds.nonzero()[:, 1]
@@ -624,6 +635,7 @@ class LitClipGraph(LitBase):
                  rank_zero_only=True)
 
         if split == 'train':
+            #tau 将答案 * tau.exp() -> tau_init
             self.log(f'{split}_tau', self.model.tau, on_step=True,
                     on_epoch=True, logger=True, sync_dist=True,
                     batch_size=batch['text_node_ids'].shape[0],

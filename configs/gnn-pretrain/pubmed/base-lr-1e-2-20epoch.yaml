@@ -8,7 +8,7 @@ data:
         num_workers: -1
         pin_memory: true
         batch_size: 1
-
+# ckpt_path: lightning_logs/gnn-pretrain/pubmed/version_3/checkpoints/epoch=19-step=20.ckpt
 model:
     class_path: clip_graph.lit.LitGAE
     init_args:
@@ -70,7 +70,7 @@ trainer:
     #
 
     log_every_n_steps: 1  # one step is one epoch
-    track_grad_norm: 2  # the 2-norm
+    # track_grad_norm: 2  # the 2-norm
     enable_model_summary: true
     enable_progress_bar: true
 

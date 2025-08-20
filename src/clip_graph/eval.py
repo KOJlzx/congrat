@@ -45,7 +45,12 @@ class EvalData:
         self.trained_texts_file = trained_texts_file
         self.dataset_yaml_path = dataset_yaml_path
         self.dataset_split = dataset_split
-
+        #data/embeds/test-graph-u_wbrannon_github_clip-graph_lightning_logs_gnn-pretrain_pubmed_version_5.pt
+        #data/embeds/test-graph-u_wbrannon_github_clip-graph_lightning_logs_clip-graph_inductive-causal_pubmed_version_0.pt
+        #data/embeds/test-text-u_wbrannon_github_clip-graph_lightning_logs_lm-pretrain_pubmed_causal_version_1.pt
+        #data/embeds/test-text-u_wbrannon_github_clip-graph_lightning_logs_clip-graph_inductive-causal_pubmed_version_0.pt
+        print("____", self.comp_nodes_file, self.trained_nodes_file, self.comp_texts_file, self.trained_texts_file)
+        print("____", self.dataset_yaml_path, self.dataset_split)
         self.comp_nodes = torch.load(comp_nodes_file, map_location='cpu')
         self.trained_nodes = torch.load(trained_nodes_file, map_location='cpu')
         self.comp_texts = torch.load(comp_texts_file, map_location='cpu')

@@ -184,3 +184,5 @@ def smart_open(filename='-', mode='r', method=zip_safe_open, **kwargs):
             fh.close()
         elif not is_read and fh is not sys.stdout:
             fh.close()
+
+

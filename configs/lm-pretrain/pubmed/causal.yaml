@@ -7,10 +7,10 @@ data:
         seed: ${seed_everything}
         tokenizer_name: 'distilgpt2'
         mlm: false
-        batch_size: 12
+        batch_size: 4
         num_workers: -1
         pin_memory: True
-
+ckpt_path: lightning_logs/lm-pretrain/pubmed/causal/version_6/checkpoints/epoch=2-step=10368.ckpt
 model:
     class_path: clip_graph.lit.LitPretrainLM
     init_args:
@@ -69,7 +69,7 @@ trainer:
     enable_progress_bar: true
 
     # not supported with deepspeed
-    track_grad_norm: 2  # the 2-norm
+    # track_grad_norm: 2  # the 2-norm
 
     logger:
         class_path: pytorch_lightning.loggers.tensorboard.TensorBoardLogger

@@ -62,6 +62,7 @@ def interpret_ckpt_dir(
 
     ## Load the checkpoint - note we have to handle deepspeed separately
     if not os.path.isdir(checkpoint):  # is normal PL checkpoint
+        print("++++++++++++++++++++", checkpoint, kls)
         model = kls.load_from_checkpoint(checkpoint)
     else:  # is deepspeed checkpoint
         sd_path = os.path.join(checkpoint, 'state_dict.pt')
@@ -137,6 +138,7 @@ def get_lm_scores(
 ) -> torch.Tensor:
     assert split in ('train', 'val', 'test')
 
+    print("________________", dat)
     ds = getattr(dat['dm'], split + '_dataset')
     if isinstance(ds, BatchGraphTextDataset):
         ds = ds.dataset
@@ -146,7 +148,7 @@ def get_lm_scores(
         ldr = torch.utils.data.DataLoader(
             ds,
             shuffle=False,
-            batch_size=128,
+            batch_size=32,
             collate_fn=ds.__collate__,
         )
     else:
